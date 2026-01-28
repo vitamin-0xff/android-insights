@@ -1,0 +1,387 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{tocloft}
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+
+\title{Technical Specifications — Android Device Insights App (Enhanced)}
+\author{Si Essid (Product Owner)}
+\date{January 25, 2026}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\section{Introduction}
+
+This document provides the technical specifications for the Android Device Insights App, based on the functional requirements outlined in the Cahier des Charges. The app will be developed using Jetpack Compose for the user interface, ensuring a modern, declarative UI approach. It focuses on providing insights into device health, including battery, thermal, performance, storage, network, screen, sensors, audio, and app behavior, with predictive analytics and automation features.
+
+Key technical decisions:
+\begin{itemize}
+    \item UI Framework: Jetpack Compose
+    \item Architecture: Clean Architecture with MVVM/MVI
+    \item Dependency Injection: Hilt
+    \item Local Database: Room
+    \item Background Processing: WorkManager and Foreground Services (opt-in)
+    \item Machine Learning: TensorFlow Lite for on-device predictions
+    \item Charts: Jetpack Compose with Vico or MPAndroidChart
+\end{itemize}
+
+\section{Target Platforms \& Compatibility}
+
+\begin{itemize}
+    \item Android 8.0 (API 26) baseline; target SDK API 35+
+    \item Primary: Phones; Secondary: Tablets and Foldables
+    \item Feature detection for OEM differences
+    \item Material You dynamic theming on Android 12+
+\end{itemize}
+
+\section{Architecture}
+
+The app follows Clean Architecture principles with MVVM/MVI patterns to ensure separation of concerns, testability, and maintainability.
+
+\subsection{Modularization}
+
+The project is structured into modules:
+\begin{itemize}
+    \item \texttt{:app} — Main application module
+    \item \texttt{:core:common} — Shared utilities and extensions
+    \item \texttt{:core:ui} — Common UI components and theme (using Jetpack Compose)
+    \item \texttt{:core:data} — Data layer abstractions
+    \item \texttt{:core:domain} — Business logic and use cases
+    \item \texttt{:core:ml} — Machine learning models and inference (TensorFlow Lite)
+    \item \texttt{:feature:battery} — Battery monitoring and insights
+    \item \texttt{:feature:thermal} — Thermal monitoring
+    \item \texttt{:feature:performance} — Performance tracking
+    \item \texttt{:feature:storage} — Storage analysis
+    \item \texttt{:feature:network} — Network monitoring
+    \item \texttt{:feature:screen} — Screen health
+    \item \texttt{:feature:sensors} — Sensor diagnostics
+    \item \texttt{:feature:audio} — Audio health
+    \item \texttt{:feature:apps} — App behavior profiling
+    \item \texttt{:feature:insights} — Recommendation engine
+    \item \texttt{:feature:automation} — Automation engine
+    \item \texttt{:feature:reports} — Report generation and export
+    \item \texttt{:feature:settings} — Settings and privacy
+    \item \texttt{:feature:onboarding} — First-run experience
+\end{itemize}
+
+\subsection{Data Layer}
+
+\begin{itemize}
+    \item Room: Local database for historical data
+    \item DataStore: For preferences and simple key-value storage
+    \item Repositories: Abstraction over data sources (Android APIs, databases)
+    \item Data purge policy: Configurable 30-90 days with user override
+    \item Export/import: For data portability in standard formats (JSON, CSV)
+\end{itemize}
+
+\subsection{Background Processing}
+
+\begin{itemize}
+    \item WorkManager: For periodic sampling, cleanup, and analysis
+    \item Foreground Service: For continuous monitoring (opt-in, with notifications)
+    \item Constraints: Battery not low, device idle preferred
+    \item Adaptive intervals: Reduce frequency when battery low
+    \item Wake locks: Minimal and justified usage only
+\end{itemize}
+
+\subsection{Dependency Injection}
+
+\begin{itemize}
+    \item Hilt: Preferred for DI
+    \item Modules organized by feature
+    \item Scoped dependencies (Singleton, ViewModel, etc.)
+    \item Test doubles for unit/integration testing
+\end{itemize}
+
+\subsection{Observability}
+
+\begin{itemize}
+    \item Crashlytics (Firebase, opt-in): Crash reporting
+    \item Performance Monitoring: Trace key operations
+    \item In-app logs viewer: For user troubleshooting
+    \item Debug panel: Developer mode with diagnostics
+    \item ANR tracking and reporting
+\end{itemize}
+
+\section{UI Framework}
+
+The entire user interface will be built using Jetpack Compose, providing a declarative, efficient, and responsive UI.
+
+\begin{itemize}
+    \item Composable functions for screens and components
+    \item State management with ViewModels and StateFlow
+    \item Navigation: Jetpack Navigation Compose
+    \item Theming: Material 3 with dynamic colors
+    \item Charts and Visualizations: Vico library integrated with Compose
+    \item Responsive layouts for phones, tablets, and foldables
+    \item Animations: Built-in Compose animations for transitions and interactions
+\end{itemize}
+
+\section{Internal Services}
+
+Internal services handle background tasks, monitoring, and processing. These are implemented as Android Services or Workers.
+
+\begin{itemize}
+    \item BatteryMonitoringService: Monitors battery level, temperature, charging status (using Foreground Service for live updates)
+    \item ThermalMonitoringService: Tracks thermal status and throttling (WorkManager periodic)
+    \item PerformanceMonitoringService: Collects CPU load, memory, jank metrics (WorkManager)
+    \item StorageAnalyzerService: Analyzes storage usage, large files (Periodic Worker)
+    \item NetworkMonitorService: Monitors signal quality, data usage (WorkManager)
+    \item ScreenHealthService: Assesses burn-in risk, brightness patterns (Periodic)
+    \item SensorsHealthService: Diagnostics for accelerometer, gyroscope, etc. (On-demand Worker)
+    \item AudioHealthService: Monitors speaker and headphone output (On-demand)
+    \item AppBehaviorProfiler: Profiles wake locks, alarms, background activity (WorkManager)
+    \item InsightEngineService: Applies rules, calculates scores, generates recommendations (Periodic Worker)
+    \item AutomationEngineService: Executes smart triggers and actions (WorkManager with constraints)
+    \item NotificationService: Handles alerts and notifications (using NotificationManager)
+    \item ReportGeneratorService: Generates and exports reports (On-demand Worker)
+\end{itemize}
+
+All services respect battery optimizations and user opt-in for continuous monitoring.
+
+\section{External Services and Libraries}
+
+External libraries and services enhance functionality while keeping the app lightweight.
+
+\begin{itemize}
+    \item TensorFlow Lite: On-device ML for predictive analytics (battery lifespan, anomaly detection)
+    \item Firebase Crashlytics: Opt-in crash reporting (external service)
+    \item Firebase Performance Monitoring: Opt-in tracing (external)
+    \item Firebase Analytics: Opt-in event tracking (external, privacy-first)
+    \item Vico or MPAndroidChart: Charting library for visualizations (integrated with Compose)
+    \item SQLCipher: Optional database encryption
+    \item R8/ProGuard: Code obfuscation
+    \item Android Keystore: Secure storage
+\end{itemize}
+
+No external cloud services for core data storage; all processing on-device unless opt-in analytics.
+
+\section{Data Sources \& Android APIs}
+
+The app uses the following Android APIs:
+
+\begin{itemize}
+    \item Battery: BatteryManager, ACTION\_BATTERY\_CHANGED, UsageStatsManager, PowerManager
+    \item Thermal: PowerManager thermal APIs (ThermalStatus, onThermalStatusChanged)
+    \item Performance: ActivityManager, FrameMetricsAggregator, Debug.MemoryInfo
+    \item Storage: StatFs, StorageManager, StorageStatsManager
+    \item Network: TelephonyManager, WifiManager, ConnectivityManager, NetworkStatsManager
+    \item Sensors: SensorManager
+    \item Display: DisplayManager
+    \item Audio: AudioManager
+    \item Apps: PackageManager, UsageStatsManager, ApplicationInfo
+    \item Background: WorkManager, JobScheduler
+\end{itemize}
+
+\section{Permissions}
+
+Required:
+\begin{itemize}
+    \item PACKAGE\_USAGE\_STATS (Usage Access) — App drain analysis
+    \item ACCESS\_NETWORK\_STATE — Network monitoring
+\end{itemize}
+
+Optional:
+\begin{itemize}
+    \item ACCESS\_WIFI\_STATE — Wi-Fi analysis
+    \item READ\_PHONE\_STATE — Cellular signal
+    \item REQUEST\_IGNORE\_BATTERY\_OPTIMIZATIONS — Continuous monitoring (opt-in)
+    \item FOREGROUND\_SERVICE — Live monitoring
+    \item POST\_NOTIFICATIONS (Android 13+) — Alerts
+    \item MANAGE\_EXTERNAL\_STORAGE (Android 11+) — Deep storage analysis
+    \item QUERY\_ALL\_PACKAGES — App inventory
+\end{itemize}
+
+Progressive requests with rationale and graceful degradation.
+
+\section{Data Model}
+
+Data entities (Kotlin data classes, Room entities):
+
+\lstset{language=Kotlin, basicstyle=\small\ttfamily, breaklines=true}
+
+\begin{lstlisting}
+// Battery
+data class BatterySnapshot(
+    val id: Long,
+    val timestamp: Long,
+    val levelPct: Int,
+    val temperatureC: Float,
+    val voltageMv: Int,
+    val currentMa: Int?,
+    val charging: Boolean,
+    val chargeSource: ChargeSource,
+    val powerProfileWatts: Float?
+)
+
+data class BatteryHealth(
+    val id: Long,
+    val timestamp: Long,
+    val estimatedCapacityMah: Int,
+    val designCapacityMah: Int,
+    val wearLevelPct: Float,
+    val cyclesEstimated: Int,
+    val healthScore: Float,
+    val confidenceLevel: Float
+)
+
+data class ChargeSession(
+    val id: Long,
+    val startTime: Long,
+    val endTime: Long,
+    val startLevelPct: Int,
+    val endLevelPct: Int,
+    val energyAddedMah: Int,
+    val avgTemperatureC: Float,
+    val maxTemperatureC: Float,
+    val chargeSource: ChargeSource,
+    val avgChargingSpeedMa: Int,
+    val wasInterrupted: Boolean
+)
+
+data class AppDrain(
+    val id: Long,
+    val packageName: String,
+    val timeWindowStart: Long,
+    val timeWindowEnd: Long,
+    val estimatedDrainPct: Float,
+    val foregroundMinutes: Int,
+    val backgroundMinutes: Int,
+    val wakeLocksCount: Int,
+    val alarmsCount: Int,
+    val networkRequestsCount: Int
+)
+
+// Thermal
+data class ThermalSnapshot(
+    val id: Long,
+    val timestamp: Long,
+    val thermalStatus: Int,
+    val throttlingLevel: Int,
+    val batteryTempC: Float,
+    val cpuTempC: Float?,
+    val skinTempC: Float?
+)
+
+data class ThermalEvent(
+    val id: Long,
+    val startTime: Long,
+    val endTime: Long?,
+    val peakTemperature: Float,
+    val triggerSource: String,
+    val throttlingOccurred: Boolean
+)
+
+// Performance
+data class PerformanceSnapshot(
+    val id: Long,
+    val timestamp: Long,
+    val cpuLoadPct: Float,
+    val memoryUsedMb: Int,
+    val memoryAvailableMb: Int,
+    val jankCount: Int,
+    val frameDropPct: Float?
+)
+
+// Storage
+data class StorageSnapshot(
+    val id: Long,
+    val timestamp: Long,
+    val totalBytes: Long,
+    val usedBytes: Long,
+    val freeBytes: Long,
+    val systemBytes: Long,
+    val appsBytes: Long,
+    val mediaBytes: Long,
+    val documentsBytes: Long,
+    val cacheBytes: Long
+)
+
+// Network
+data class NetworkSnapshot(
+    val id: Long,
+    val timestamp: Long,
+    val networkType: String,
+    val signalStrengthDbm: Int?,
+    val wifiLinkSpeedMbps: Int?,
+    val cellularBand: String?,
+    val isConnected: Boolean
+)
+
+// Screen
+data class ScreenUsageSnapshot(
+    val id: Long,
+    val timestamp: Long,
+    val screenOnMinutes: Int,
+    val avgBrightnessLevel: Int,
+    val refreshRateHz: Int,
+    val darkModeEnabled: Boolean
+)
+
+// Sensors
+data class SensorHealth(
+    val id: Long,
+    val timestamp: Long,
+    val sensorType: String,
+    val accuracyLevel: Int,
+    val needsCalibration: Boolean,
+    val lastCalibrationTime: Long?
+)
+
+// Insights
+data class Insight(
+    val id: Long,
+    val timestamp: Long,
+    val category: String,
+    val severity: String,
+    val title: String,
+    val description: String,
+    val impactEstimate: String,
+    val difficulty: String,
+    val actionSteps: List<String>,
+    val appliedAt: Long?,
+    val dismissedAt: Long?
+)
+
+// Automation
+data class Automation(
+    val id: Long,
+    val name: String,
+    val enabled: Boolean,
+    val triggerConditions: String,
+    val actions: String,
+    val lastRunTime: Long?,
+    val executionCount: Int
+)
+\end{lstlisting}
+
+\section{Privacy \& Security}
+
+\begin{itemize}
+    \item On-device processing: No PII collection by default
+    \item Encryption: Room with SQLCipher (optional), Android Keystore
+    \item Code Obfuscation: R8/ProGuard
+    \item Compliance: GDPR, CCPA principles
+    \item Telemetry: Opt-in with anonymization
+\end{itemize}
+
+\section{Insight Engine}
+
+The insight engine processes rules and scoring on-device.
+
+\subsection{Rule Categories}
+
+As defined in the functional spec (battery, thermal, performance, etc.).
+
+\subsection{Health Score Calculation}
+
+Overall score (0-100) with weights as specified.
+
+\end{document}
