@@ -367,14 +367,6 @@ When contributing to this project:
 - Invalidate caches and restart Android Studio
 - Check Kotlin and Gradle versions
 
-## License
-
-[Specify license information]
-
-## Contact
-
-For questions, suggestions, or contributions, please contact the development team.
-
 ---
 
 **Version:** 1.0  
