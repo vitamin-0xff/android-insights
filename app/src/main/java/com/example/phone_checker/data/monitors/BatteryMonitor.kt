@@ -11,6 +11,7 @@ import androidx.core.content.ContextCompat
 import com.example.phone_checker.data.repository.BatteryHealth
 import com.example.phone_checker.data.repository.BatteryInfo
 import com.example.phone_checker.data.repository.BatteryStatus
+import com.example.phone_checker.data.repository.ChargingType
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -134,6 +135,14 @@ class BatteryMonitor @Inject constructor(
             val isCharging = status == BatteryStatus.CHARGING || status == BatteryStatus.FULL
             val technology = intent.getStringExtra(BatteryManager.EXTRA_TECHNOLOGY) ?: "Unknown"
 
+            val plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1)
+            val chargingType = when (plugged) {
+                BatteryManager.BATTERY_PLUGGED_AC -> ChargingType.AC
+                BatteryManager.BATTERY_PLUGGED_USB -> ChargingType.USB
+                BatteryManager.BATTERY_PLUGGED_WIRELESS -> ChargingType.WIRELESS
+                else -> if (isCharging) ChargingType.UNKNOWN else ChargingType.NONE
+            }
+
             val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
             val capacityPercent = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
 
@@ -149,7 +158,19 @@ class BatteryMonitor @Inject constructor(
             val energyCounterNwh = batteryManager.getLongProperty(BatteryManager.BATTERY_PROPERTY_ENERGY_COUNTER)
             val energyCounter = if (energyCounterNwh > 0) energyCounterNwh else null
 
-            // Cycle count may not be available on all devices or API versions
+            // Time estimates for API 28+ (P)
+            val timeToFull = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                try {
+                    val millis = batteryManager.computeChargeTimeRemaining()
+                    if (millis > 0) (millis / 60000).toInt() else null
+                } catch (e: Exception) {
+                    null
+                }
+            } else null
+
+            // Estimate health percentage from capacity
+            val healthPercent = if (capacityPercent in 1..100) capacityPercent else null
+
             val cycleCountValue: Int? = null
 
             val batteryData = BatteryInfo(
@@ -165,7 +186,11 @@ class BatteryMonitor @Inject constructor(
                 currentNowMa = currentNowMa,
                 currentAverageMa = currentAverageMa,
                 energyCounterNwh = energyCounter,
-                cycleCount = cycleCountValue
+                cycleCount = cycleCountValue,
+                chargingType = chargingType,
+                timeToFullMinutes = timeToFull,
+                timeToEmptyMinutes = null,
+                healthPercent = healthPercent
             )
 
             _batteryInfo.value = batteryData

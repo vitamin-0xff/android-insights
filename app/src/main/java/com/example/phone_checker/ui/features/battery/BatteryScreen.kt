@@ -18,6 +18,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.phone_checker.data.repository.BatteryHealth
 import com.example.phone_checker.data.repository.BatteryInfo
 import com.example.phone_checker.data.repository.BatteryStatus
+import com.example.phone_checker.data.repository.ChargingType
 import com.example.phone_checker.ui.theme.PhonecheckerTheme
 import kotlin.math.abs
 
@@ -157,51 +158,31 @@ fun BatteryInfoContent(
             value = batteryInfo.technology
         )
 
-        // Battery Health Section
-        Text(
-            text = "Battery Health",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(top = 8.dp)
-        )
-
-        // Capacity Health Card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = when {
-                    batteryInfo.capacityPercent >= 80 -> MaterialTheme.colorScheme.primaryContainer
-                    batteryInfo.capacityPercent >= 60 -> MaterialTheme.colorScheme.tertiaryContainer
-                    else -> MaterialTheme.colorScheme.errorContainer
+        if (batteryInfo.chargingType != ChargingType.NONE) {
+            InfoCard(
+                title = "Charging Type",
+                value = when (batteryInfo.chargingType) {
+                    ChargingType.AC -> "AC Adapter"
+                    ChargingType.USB -> "USB Cable"
+                    ChargingType.WIRELESS -> "Wireless"
+                    ChargingType.DOCK -> "Dock"
+                    else -> "Unknown"
                 }
             )
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "Battery Capacity",
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "${batteryInfo.capacityPercent}%",
-                    style = MaterialTheme.typography.displayMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = when {
-                        batteryInfo.capacityPercent >= 80 -> "Excellent Health"
-                        batteryInfo.capacityPercent >= 60 -> "Good Health"
-                        else -> "Consider Replacement"
-                    },
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
+        }
+
+        batteryInfo.timeToFullMinutes?.let { minutes ->
+            InfoCard(
+                title = "Time to Full",
+                value = if (minutes < 60) "$minutes min" else "${minutes / 60}h ${minutes % 60}m"
+            )
+        }
+
+        batteryInfo.timeToEmptyMinutes?.let { minutes ->
+            InfoCard(
+                title = "Time to Empty",
+                value = if (minutes < 60) "$minutes min" else "${minutes / 60}h ${minutes % 60}m"
+            )
         }
 
         batteryInfo.chargeCounterMah?.let {
@@ -295,7 +276,11 @@ fun BatteryScreenPreview() {
                 currentNowMa = 1200,
                 currentAverageMa = 980,
                 energyCounterNwh = 15000000000,
-                cycleCount = 125
+                cycleCount = 125,
+                chargingType = ChargingType.AC,
+                timeToFullMinutes = 45,
+                timeToEmptyMinutes = null,
+                healthPercent = 88
             )
         )
     }

@@ -14,12 +14,16 @@ data class BatteryInfo(
     val status: BatteryStatus,
     val isCharging: Boolean,
     val technology: String,
-    val capacityPercent: Int, // Current capacity as percentage of design capacity
-    val chargeCounterMah: Int?, // Current charge in mAh
-    val currentNowMa: Int?, // Current flow in mA (positive = charging, negative = discharging)
-    val currentAverageMa: Int?, // Average current in mA
-    val energyCounterNwh: Long?, // Remaining energy in nWh
-    val cycleCount: Int? // Number of charge cycles (if available)
+    val capacityPercent: Int,
+    val chargeCounterMah: Int?,
+    val currentNowMa: Int?,
+    val currentAverageMa: Int?,
+    val energyCounterNwh: Long?,
+    val cycleCount: Int?,
+    val chargingType: ChargingType,
+    val timeToFullMinutes: Int?,
+    val timeToEmptyMinutes: Int?,
+    val healthPercent: Int?
 )
 
 enum class BatteryHealth {
@@ -28,6 +32,10 @@ enum class BatteryHealth {
 
 enum class BatteryStatus {
     CHARGING, DISCHARGING, NOT_CHARGING, FULL, UNKNOWN
+}
+
+enum class ChargingType {
+    AC, USB, WIRELESS, DOCK, NONE, UNKNOWN
 }
 
 interface BatteryRepository {
