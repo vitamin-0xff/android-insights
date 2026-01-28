@@ -274,8 +274,8 @@ class InsightsRepositoryImpl @Inject constructor(
             }
 
             // Network Insights
-            when (network.connectionQuality) {
-                ConnectionQuality.DISCONNECTED -> add(
+            when {
+                !network.isConnected -> add(
                     DeviceInsight(
                         id = "network_disconnected",
                         category = InsightCategory.SYSTEM,
@@ -286,13 +286,13 @@ class InsightsRepositoryImpl @Inject constructor(
                     )
                 )
 
-                ConnectionQuality.POOR -> add(
+                network.signalStrength < 40 -> add(
                     DeviceInsight(
                         id = "network_poor",
                         category = InsightCategory.SYSTEM,
                         severity = InsightSeverity.INFO,
                         title = "Weak Network Signal",
-                        description = "${network.networkType.name} signal is weak",
+                        description = "${network.networkType.name} signal is weak (${network.signalStrength}%)",
                         recommendation = "Move closer to your router or switch to a stronger network for better connectivity."
                     )
                 )
@@ -328,42 +328,42 @@ class InsightsRepositoryImpl @Inject constructor(
                 )
             }
 
-            // Screen Health Insights
-            when (screen.status) {
-                ScreenHealthStatus.EXCESSIVE -> add(
-                    DeviceInsight(
-                        id = "screen_excessive",
-                        category = InsightCategory.SYSTEM,
-                        severity = InsightSeverity.WARNING,
-                        title = "Excessive Screen Time",
-                        description = "Screen on for ${screen.screenOnTimeMinutes / 60}h ${screen.screenOnTimeMinutes % 60}m today",
-                        recommendation = screen.recommendation
-                    )
-                )
-
-                ScreenHealthStatus.MODERATE -> add(
-                    DeviceInsight(
-                        id = "screen_moderate",
-                        category = InsightCategory.SYSTEM,
-                        severity = InsightSeverity.INFO,
-                        title = "Moderate Screen Usage",
-                        description = "Screen time: ${screen.screenOnTimeMinutes / 60}h ${screen.screenOnTimeMinutes % 60}m",
-                        recommendation = "Consider taking breaks to reduce eye strain."
-                    )
-                )
-
-                else -> {}
-            }
-
-            if (!screen.autoBrightnessEnabled && screen.avgBrightnessLevel > 200) {
+            // Screen Display Insights
+            if (screen.isHdr) {
                 add(
                     DeviceInsight(
-                        id = "brightness_high",
-                        category = InsightCategory.BATTERY,
-                        severity = InsightSeverity.INFO,
-                        title = "High Screen Brightness",
-                        description = "Manual brightness set to ${(screen.avgBrightnessLevel * 100 / 255)}%",
-                        recommendation = "Enable auto-brightness to save battery and reduce eye strain."
+                        id = "screen_hdr",
+                        category = InsightCategory.SYSTEM,
+                        severity = InsightSeverity.POSITIVE,
+                        title = "HDR Display Supported",
+                        description = "HDR capabilities detected on ${screen.displayName}",
+                        recommendation = "Enjoy HDR content for richer colors and contrast."
+                    )
+                )
+            }
+
+            if (screen.isWideColorGamut) {
+                add(
+                    DeviceInsight(
+                        id = "screen_wide_color",
+                        category = InsightCategory.SYSTEM,
+                        severity = InsightSeverity.POSITIVE,
+                        title = "Wide Color Gamut",
+                        description = "Wide color gamut support detected",
+                        recommendation = "Use compatible apps to take advantage of expanded colors."
+                    )
+                )
+            }
+
+            if (screen.refreshRate >= 90f) {
+                add(
+                    DeviceInsight(
+                        id = "screen_high_refresh",
+                        category = InsightCategory.SYSTEM,
+                        severity = InsightSeverity.POSITIVE,
+                        title = "High Refresh Rate",
+                        description = "Display running at ${screen.refreshRate.toInt()}Hz",
+                        recommendation = "Smooth visuals enabled. Lower refresh rates can save battery."
                     )
                 )
             }
@@ -412,19 +412,7 @@ class InsightsRepositoryImpl @Inject constructor(
                 }
             }
 
-            // Combined Insights - Screen + Battery
-            if (screen.screenOnTimeMinutes > 360 && battery.level < 30) {
-                add(
-                    DeviceInsight(
-                        id = "combined_screen_battery",
-                        category = InsightCategory.BATTERY,
-                        severity = InsightSeverity.WARNING,
-                        title = "High Screen Time Draining Battery",
-                        description = "Extensive screen use (${screen.screenOnTimeMinutes / 60}h) with low battery",
-                        recommendation = "Reduce screen time and charge your device soon."
-                    )
-                )
-            }
+
 
             // Storage + Apps insight
             if (storage.usagePercentage > 85 && apps.userApps > 100) {

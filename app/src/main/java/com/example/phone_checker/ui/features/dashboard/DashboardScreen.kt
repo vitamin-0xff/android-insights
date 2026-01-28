@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -27,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import android.view.Display
 import com.example.phone_checker.ui.theme.PhonecheckerTheme
 
 data class HealthMetric(
@@ -73,16 +75,18 @@ fun DashboardScreen(
         else -> HealthStatus.CRITICAL
     }
     
-    val networkStatus = when (uiState.networkQuality) {
-        "EXCELLENT", "GOOD" -> HealthStatus.GOOD
-        "FAIR" -> HealthStatus.WARNING
+    val networkStatus = when {
+        !uiState.networkType.equals("NONE", ignoreCase = true) && uiState.networkSignal >= 70 -> HealthStatus.GOOD
+        !uiState.networkType.equals("NONE", ignoreCase = true) && uiState.networkSignal >= 40 -> HealthStatus.WARNING
+        !uiState.networkType.equals("NONE", ignoreCase = true) -> HealthStatus.WARNING
         else -> HealthStatus.CRITICAL
     }
     
-    val screenStatus = when {
-        uiState.screenOnTimeMinutes < 180 -> HealthStatus.GOOD
-        uiState.screenOnTimeMinutes < 360 -> HealthStatus.WARNING
-        else -> HealthStatus.CRITICAL
+    val screenStatus = when (uiState.screenState) {
+        Display.STATE_ON -> HealthStatus.GOOD
+        Display.STATE_DOZE, Display.STATE_DOZE_SUSPEND -> HealthStatus.WARNING
+        Display.STATE_OFF -> HealthStatus.CRITICAL
+        else -> HealthStatus.UNKNOWN
     }
     
     val appsStatus = when {
@@ -98,26 +102,28 @@ fun DashboardScreen(
         else -> HealthStatus.UNKNOWN
     }
     
-    val audioStatus = when (uiState.audioHealth) {
-        "HEALTHY" -> HealthStatus.GOOD
-        "WARNING" -> HealthStatus.WARNING
-        "CRITICAL" -> HealthStatus.CRITICAL
-        else -> HealthStatus.UNKNOWN
+    val networkDisplay = if (uiState.networkType == "NONE") {
+        "Disconnected"
+    } else {
+        "${uiState.networkSignal}% - ${uiState.networkType}"
     }
     
-    val screenTimeHours = uiState.screenOnTimeMinutes / 60
-    val screenTimeMins = uiState.screenOnTimeMinutes % 60
+    val screenRefreshLabel = if (uiState.screenRefreshRate > 0f) {
+        "${uiState.screenRefreshRate.toInt()}Hz"
+    } else {
+        "N/A"
+    }
     
     val metrics = listOf(
         HealthMetric("Battery", "${uiState.batteryLevel}%", batteryStatus, Icons.Default.Build, "battery"),
         HealthMetric("Temperature", "${uiState.temperature.toInt()}°C", tempStatus, Icons.Default.Info, "thermal"),
         HealthMetric("RAM", "${uiState.ramUsage}%", ramStatus, Icons.Default.Star, "performance"),
         HealthMetric("Storage", "${uiState.storageUsage}%", storageStatus, Icons.Default.Home, "storage"),
-        HealthMetric("Network", uiState.networkType, networkStatus, Icons.Default.Settings, "network"),
-        HealthMetric("Screen Time", "${screenTimeHours}h ${screenTimeMins}m", screenStatus, Icons.Default.Phone, "screen_health"),
-        HealthMetric("Running Apps", "${uiState.appsRunning}", appsStatus, Icons.Default.List, "app_behavior"),
+        HealthMetric("Network", networkDisplay, networkStatus, Icons.Default.Settings, "network"),
+        HealthMetric("Screen", screenRefreshLabel, screenStatus, Icons.Default.Phone, "screen_health"),
+        HealthMetric("Running Apps", "${uiState.appsRunning}", appsStatus, Icons.AutoMirrored.Filled.List, "app_behavior"),
         HealthMetric("Sensors", uiState.sensorsHealth, sensorsStatus, Icons.Default.Settings, "sensors"),
-        HealthMetric("I/O", "${uiState.audioInputDevices}in/${uiState.audioOutputDevices}out", audioStatus, Icons.Default.Settings, "devices"),
+        HealthMetric("I/O", "${uiState.audioInputDevices}in/${uiState.audioOutputDevices}out", HealthStatus.GOOD, Icons.Default.Settings, "devices"),
     )
 
     Scaffold(

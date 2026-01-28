@@ -15,9 +15,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.phone_checker.data.repository.ConnectionQuality
+import com.example.phone_checker.data.repository.CellularGeneration
 import com.example.phone_checker.data.repository.NetworkInfo
 import com.example.phone_checker.data.repository.NetworkType
+import com.example.phone_checker.data.repository.WiFiFrequencyBand
 import com.example.phone_checker.ui.theme.PhonecheckerTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -99,10 +100,10 @@ fun NetworkInfoContent(
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = when (networkInfo.connectionQuality) {
-                    ConnectionQuality.EXCELLENT, ConnectionQuality.GOOD -> MaterialTheme.colorScheme.primaryContainer
-                    ConnectionQuality.FAIR -> MaterialTheme.colorScheme.tertiaryContainer
-                    ConnectionQuality.POOR, ConnectionQuality.DISCONNECTED -> MaterialTheme.colorScheme.errorContainer
+                containerColor = if (networkInfo.isConnected) {
+                    MaterialTheme.colorScheme.primaryContainer
+                } else {
+                    MaterialTheme.colorScheme.errorContainer
                 }
             )
         ) {
@@ -113,18 +114,18 @@ fun NetworkInfoContent(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Connection Quality",
+                    text = "Connection Status",
                     style = MaterialTheme.typography.titleMedium
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = networkInfo.connectionQuality.name,
+                    text = if (networkInfo.isConnected) "Connected" else "Disconnected",
                     style = MaterialTheme.typography.displaySmall,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = if (networkInfo.isConnected) "Connected" else "Disconnected",
+                    text = networkInfo.networkType.name,
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
@@ -135,31 +136,69 @@ fun NetworkInfoContent(
             value = networkInfo.networkType.name
         )
 
-        networkInfo.networkName?.let {
+        networkInfo.ssid?.let { ssid ->
             InfoCard(
-                title = "Network Name",
-                value = it
+                title = "WiFi Network",
+                value = ssid
             )
         }
 
-        networkInfo.wifiSignalStrength?.let {
+        InfoCard(
+            title = "Signal Strength",
+            value = "${networkInfo.signalStrength}%"
+        )
+
+        networkInfo.ipv4Address?.let { ipv4 ->
             InfoCard(
-                title = "WiFi Signal Strength",
-                value = "$it%"
+                title = "IPv4 Address",
+                value = ipv4
             )
         }
 
-        networkInfo.wifiLinkSpeed?.let {
+        networkInfo.ipv6Address?.let { ipv6 ->
             InfoCard(
-                title = "WiFi Link Speed",
-                value = "$it Mbps"
+                title = "IPv6 Address",
+                value = ipv6
             )
         }
 
-        networkInfo.cellularSignalStrength?.let {
+        InfoCard(
+            title = "Internet Capable",
+            value = if (networkInfo.hasInternet) "Yes" else "No"
+        )
+
+        InfoCard(
+            title = "Metered Connection",
+            value = if (networkInfo.isMetered) "Yes" else "No"
+        )
+
+        InfoCard(
+            title = "VPN Connected",
+            value = if (networkInfo.isVpnConnected) "Yes" else "No"
+        )
+
+        networkInfo.wifiFrequencyBand?.let { band ->
             InfoCard(
-                title = "Cellular Signal Strength",
-                value = "$it%"
+                title = "WiFi Frequency Band",
+                value = when (band) {
+                    WiFiFrequencyBand.BAND_2_4_GHZ -> "2.4 GHz"
+                    WiFiFrequencyBand.BAND_5_GHZ -> "5 GHz"
+                    WiFiFrequencyBand.BAND_6_GHZ -> "6 GHz"
+                    WiFiFrequencyBand.UNKNOWN -> "Unknown"
+                }
+            )
+        }
+
+        networkInfo.cellularGeneration?.let { gen ->
+            InfoCard(
+                title = "Cellular Generation",
+                value = when (gen) {
+                    CellularGeneration.GENERATION_2G -> "2G"
+                    CellularGeneration.GENERATION_3G -> "3G"
+                    CellularGeneration.GENERATION_4G -> "4G (LTE)"
+                    CellularGeneration.GENERATION_5G -> "5G"
+                    CellularGeneration.UNKNOWN -> "Unknown"
+                }
             )
         }
     }
@@ -206,11 +245,15 @@ fun NetworkScreenPreview() {
             networkInfo = NetworkInfo(
                 isConnected = true,
                 networkType = NetworkType.WIFI,
-                connectionQuality = ConnectionQuality.EXCELLENT,
-                wifiSignalStrength = 95,
-                wifiLinkSpeed = 866,
-                cellularSignalStrength = null,
-                networkName = "MyWiFi"
+                signalStrength = 95,
+                isMetered = false,
+                hasInternet = true,
+                wifiFrequencyBand = WiFiFrequencyBand.BAND_5_GHZ,
+                cellularGeneration = null,
+                isVpnConnected = false,
+                ssid = "MyHomeWiFi",
+                ipv4Address = "192.168.1.100",
+                ipv6Address = "fe80::1234:5678:9abc:def0"
             )
         )
     }

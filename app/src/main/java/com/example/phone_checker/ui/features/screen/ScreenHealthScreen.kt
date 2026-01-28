@@ -15,8 +15,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import android.view.Display
+import android.view.Surface
 import com.example.phone_checker.data.repository.ScreenHealthInfo
-import com.example.phone_checker.data.repository.ScreenHealthStatus
 import com.example.phone_checker.ui.theme.PhonecheckerTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -30,7 +31,7 @@ fun ScreenHealthScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Screen Health") },
+                title = { Text("Screen") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
@@ -94,15 +95,11 @@ fun ScreenHealthInfoContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Screen Time Card
+        // Display Summary Card
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = when (screenHealthInfo.status) {
-                    ScreenHealthStatus.OPTIMAL -> MaterialTheme.colorScheme.primaryContainer
-                    ScreenHealthStatus.MODERATE -> MaterialTheme.colorScheme.tertiaryContainer
-                    ScreenHealthStatus.EXCESSIVE -> MaterialTheme.colorScheme.errorContainer
-                }
+                containerColor = MaterialTheme.colorScheme.primaryContainer
             )
         ) {
             Column(
@@ -112,26 +109,24 @@ fun ScreenHealthInfoContent(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Screen On Time Today",
+                    text = screenHealthInfo.displayName,
                     style = MaterialTheme.typography.titleMedium
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                val hours = screenHealthInfo.screenOnTimeMinutes / 60
-                val minutes = screenHealthInfo.screenOnTimeMinutes % 60
                 Text(
-                    text = "${hours}h ${minutes}m",
+                    text = "${screenHealthInfo.widthPixels} x ${screenHealthInfo.heightPixels}",
                     style = MaterialTheme.typography.displaySmall,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = screenHealthInfo.status.name,
+                    text = "${formatRefreshRate(screenHealthInfo.refreshRate)} Hz",
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
         }
 
-        // Recommendation Card
+        // Display Capabilities Card
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
@@ -144,14 +139,19 @@ fun ScreenHealthInfoContent(
                     .padding(16.dp)
             ) {
                 Text(
-                    text = "Recommendation",
+                    text = "Display Capabilities",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = screenHealthInfo.recommendation,
+                    text = buildString {
+                        append("HDR: ")
+                        append(if (screenHealthInfo.isHdr) "Supported" else "Not supported")
+                        append(" • Wide Color Gamut: ")
+                        append(if (screenHealthInfo.isWideColorGamut) "Supported" else "Not supported")
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
@@ -159,18 +159,33 @@ fun ScreenHealthInfoContent(
         }
 
         InfoCard(
-            title = "Brightness Level",
-            value = "${(screenHealthInfo.avgBrightnessLevel * 100 / 255)}%"
+            title = "Suggested Frame Rate",
+            value = formatSuggestedFrameRate(screenHealthInfo.suggestedFrameRate)
         )
 
         InfoCard(
-            title = "Auto Brightness",
-            value = if (screenHealthInfo.autoBrightnessEnabled) "Enabled" else "Disabled"
+            title = "Supported Refresh Rates",
+            value = formatSupportedRates(screenHealthInfo.supportedRefreshRates)
         )
 
         InfoCard(
-            title = "Screen Timeout",
-            value = "${screenHealthInfo.screenTimeout}s"
+            title = "Density",
+            value = "${screenHealthInfo.densityDpi} dpi"
+        )
+
+        InfoCard(
+            title = "Rotation",
+            value = formatRotation(screenHealthInfo.rotation)
+        )
+
+        InfoCard(
+            title = "Display State",
+            value = formatDisplayState(screenHealthInfo.displayState)
+        )
+
+        InfoCard(
+            title = "Display Count",
+            value = screenHealthInfo.displayCount.toString()
         )
     }
 }
@@ -214,13 +229,54 @@ fun ScreenHealthScreenPreview() {
     PhonecheckerTheme {
         ScreenHealthInfoContent(
             screenHealthInfo = ScreenHealthInfo(
-                screenOnTimeMinutes = 285,
-                avgBrightnessLevel = 128,
-                autoBrightnessEnabled = true,
-                screenTimeout = 30,
-                status = ScreenHealthStatus.MODERATE,
-                recommendation = "Moderate screen time. Take regular breaks to reduce eye strain."
+                displayName = "Built-in Display",
+                widthPixels = 1080,
+                heightPixels = 2400,
+                densityDpi = 420,
+                refreshRate = 120f,
+                suggestedFrameRate = 90f,
+                supportedRefreshRates = listOf(60f, 90f, 120f),
+                rotation = Surface.ROTATION_0,
+                displayState = Display.STATE_ON,
+                isHdr = true,
+                isWideColorGamut = true,
+                displayCount = 1
             )
         )
     }
+}
+
+private fun formatRotation(rotation: Int): String = when (rotation) {
+    Surface.ROTATION_0 -> "0°"
+    Surface.ROTATION_90 -> "90°"
+    Surface.ROTATION_180 -> "180°"
+    Surface.ROTATION_270 -> "270°"
+    else -> "Unknown"
+}
+
+private fun formatDisplayState(state: Int): String = when (state) {
+    Display.STATE_ON -> "On"
+    Display.STATE_OFF -> "Off"
+    Display.STATE_DOZE -> "Doze"
+    Display.STATE_DOZE_SUSPEND -> "Doze Suspend"
+    Display.STATE_UNKNOWN -> "Unknown"
+    else -> "Unknown"
+}
+
+private fun formatRefreshRate(rate: Float): String = if (rate > 0f) {
+    rate.toInt().toString()
+} else {
+    "N/A"
+}
+
+private fun formatSuggestedFrameRate(rate: Float): String = if (rate > 0f) {
+    "${rate.toInt()} Hz"
+} else {
+    "Not available"
+}
+
+private fun formatSupportedRates(rates: List<Float>): String = if (rates.isNotEmpty()) {
+    rates.joinToString(", ") { "${it.toInt()} Hz" }
+} else {
+    "Not available"
 }
