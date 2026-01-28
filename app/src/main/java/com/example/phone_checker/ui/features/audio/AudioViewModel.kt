@@ -2,6 +2,7 @@ package com.example.phone_checker.ui.features.audio
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.phone_checker.data.monitors.AudioDevice
 import com.example.phone_checker.data.repository.AudioHealthInfo
 import com.example.phone_checker.domain.usecase.GetAudioHealthInfoUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,6 +15,8 @@ import javax.inject.Inject
 
 data class AudioUiState(
     val audioInfo: AudioHealthInfo? = null,
+    val inputDevices: List<AudioDevice> = emptyList(),
+    val outputDevices: List<AudioDevice> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null
 )
@@ -40,7 +43,11 @@ class AudioViewModel @Inject constructor(
                     )
                 }
                 .collect { info ->
-                    _uiState.value = AudioUiState(audioInfo = info)
+                    _uiState.value = AudioUiState(
+                        audioInfo = info,
+                        inputDevices = info.inputDevices,
+                        outputDevices = info.outputDevices
+                    )
                 }
         }
     }

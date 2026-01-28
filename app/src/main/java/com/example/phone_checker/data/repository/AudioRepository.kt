@@ -2,6 +2,9 @@ package com.example.phone_checker.data.repository
 
 import android.content.Context
 import android.media.AudioManager
+import com.example.phone_checker.data.monitors.AudioDeviceCategory
+import com.example.phone_checker.data.monitors.AudioDevice
+import com.example.phone_checker.data.monitors.AudioDeviceRole
 import com.example.phone_checker.data.monitors.AudioMonitor
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -24,7 +27,9 @@ data class AudioHealthInfo(
     val headphoneHealth: AudioDeviceHealth,
     val volumeWarnings: List<String>,
     val status: AudioHealthStatus,
-    val recommendation: String
+    val recommendation: String,
+    val inputDevices: List<AudioDevice> = emptyList(),
+    val outputDevices: List<AudioDevice> = emptyList()
 )
 
 enum class MicrophoneStatus {
@@ -59,10 +64,19 @@ class AudioRepositoryImpl @Inject constructor(
         val speakerMaxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
         val speakerVolumePercent = (speakerVolume * 100) / speakerMaxVolume
         
+        // Compute external devices
+        val externalDevices = deviceState.connectedDevices.filter { 
+            it.category != AudioDeviceCategory.BUILT_IN 
+        }
+        val hasExternalOutput = externalDevices.any { 
+            it.role == com.example.phone_checker.data.monitors.AudioDeviceRole.OUTPUT || 
+            it.role == com.example.phone_checker.data.monitors.AudioDeviceRole.BIDIRECTIONAL 
+        }
+        
         // Get microphone status
         val microphoneStatus = when {
             audioManager.isMicrophoneMute -> MicrophoneStatus.MUTED
-            deviceState.inputAvailable -> MicrophoneStatus.AVAILABLE
+            deviceState.hasWiredHeadset || deviceState.hasBluetoothAudio -> MicrophoneStatus.AVAILABLE
             else -> MicrophoneStatus.UNAVAILABLE
         }
         
@@ -78,29 +92,40 @@ class AudioRepositoryImpl @Inject constructor(
             else -> AudioDeviceHealth.EXCELLENT
         }
         
-        val microphoneHealth = when {
-            microphoneStatus == MicrophoneStatus.MUTED -> AudioDeviceHealth.FAIR
-            microphoneStatus == MicrophoneStatus.AVAILABLE -> AudioDeviceHealth.EXCELLENT
+        val microphoneHealth = when (microphoneStatus) {
+            MicrophoneStatus.MUTED -> AudioDeviceHealth.FAIR
+            MicrophoneStatus.AVAILABLE -> AudioDeviceHealth.EXCELLENT
             else -> AudioDeviceHealth.POOR
         }
+        
+        // Evaluate headphone health based on audio quality capabilities
+        val headphoneHealth = deviceState.activeOutputDevice?.let { device ->
+            when {
+                device.category == AudioDeviceCategory.BUILT_IN -> AudioDeviceHealth.FAIR
+                device.sampleRates.any { it >= 48000 } -> AudioDeviceHealth.EXCELLENT
+                device.sampleRates.any { it >= 44100 } -> AudioDeviceHealth.GOOD
+                else -> AudioDeviceHealth.FAIR
+            }
+        } ?: AudioDeviceHealth.GOOD
         
         val volumeWarnings = mutableListOf<String>()
         if (speakerVolumePercent > 90) {
             volumeWarnings.add("Speaker volume is very high (${speakerVolumePercent}%). Risk of hearing damage.")
         }
-        if (musicActive && speakerVolumePercent > 80) {
-            volumeWarnings.add("Music playing at high volume. Use headphones for hearing protection.")
+        if (musicActive && speakerVolumePercent > 80 && hasExternalOutput) {
+            volumeWarnings.add("Music playing at high volume through headphones. Reduce volume for hearing protection.")
         }
         
         val status = when {
             volumeWarnings.isNotEmpty() -> AudioHealthStatus.WARNING
-            !deviceState.isHealthy -> AudioHealthStatus.CRITICAL
+            deviceState.audioBecomingNoisy -> AudioHealthStatus.WARNING
             else -> AudioHealthStatus.HEALTHY
         }
         
         val recommendation = when {
             volumeWarnings.isNotEmpty() -> volumeWarnings.first()
-            !deviceState.isHealthy -> "Audio device issue detected. Check connections."
+            deviceState.audioBecomingNoisy -> "Audio output disconnected. Check connections."
+            externalDevices.isEmpty() -> "Connect headphones for better audio quality."
             else -> "Audio system is healthy."
         }
         
@@ -108,17 +133,19 @@ class AudioRepositoryImpl @Inject constructor(
             speakerVolume = speakerVolume,
             speakerMaxVolume = speakerMaxVolume,
             microphoneStatus = microphoneStatus,
-            headphoneConnected = deviceState.outputAvailable,
-            bluetoothAudioConnected = audioManager.isBluetoothScoOn,
+            headphoneConnected = deviceState.hasWiredHeadset,
+            bluetoothAudioConnected = deviceState.hasBluetoothAudio,
             musicActive = musicActive,
             callActive = callActive,
             recordingActive = false,
             speakerHealth = speakerHealth,
             microphoneHealth = microphoneHealth,
-            headphoneHealth = AudioDeviceHealth.GOOD,
+            headphoneHealth = headphoneHealth,
             volumeWarnings = volumeWarnings,
             status = status,
-            recommendation = recommendation
+            recommendation = recommendation,
+            inputDevices = deviceState.inputDevices,
+            outputDevices = deviceState.outputDevices
         )
     }
 }

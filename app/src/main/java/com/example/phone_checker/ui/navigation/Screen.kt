@@ -10,7 +10,7 @@ sealed class Screen(val route: String) {
     object Network : Screen("network")
     object ScreenHealth : Screen("screen_health")
     object Sensors : Screen("sensors")
-    object Audio : Screen("audio")
+    object Devices : Screen("devices")
     object AppBehavior : Screen("app_behavior")
     object Insights : Screen("insights")
 }

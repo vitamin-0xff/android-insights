@@ -117,7 +117,7 @@ fun DashboardScreen(
         HealthMetric("Screen Time", "${screenTimeHours}h ${screenTimeMins}m", screenStatus, Icons.Default.Phone, "screen_health"),
         HealthMetric("Running Apps", "${uiState.appsRunning}", appsStatus, Icons.Default.List, "app_behavior"),
         HealthMetric("Sensors", uiState.sensorsHealth, sensorsStatus, Icons.Default.Settings, "sensors"),
-        HealthMetric("Audio", uiState.audioHealth, audioStatus, Icons.Default.Settings, "audio"),
+        HealthMetric("I/O", "${uiState.audioInputDevices}in/${uiState.audioOutputDevices}out", audioStatus, Icons.Default.Settings, "devices"),
     )
 
     Scaffold(

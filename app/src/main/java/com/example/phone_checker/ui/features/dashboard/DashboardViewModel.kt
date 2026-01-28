@@ -54,6 +54,8 @@ data class DashboardUiState(
     val appsRunning: Int = 0,
     val sensorsHealth: String = "Unknown",
     val audioHealth: String = "Unknown",
+    val audioInputDevices: Int = 0,
+    val audioOutputDevices: Int = 0,
     val criticalIssues: Int = 0,
     val warnings: Int = 0,
     val overallHealth: String = "Unknown",
@@ -134,6 +136,9 @@ class DashboardViewModel @Inject constructor(
                             screenOnTimeMinutes = metrics.screen.screenOnTimeMinutes,
                             appsRunning = metrics.apps.runningApps,
                             sensorsHealth = metrics.sensors.status.name,
+                            audioHealth = metrics.audio.status.name,
+                            audioInputDevices = metrics.audio.inputDevices.filter { it.category.name != "BUILT_IN" }.size,
+                            audioOutputDevices = metrics.audio.outputDevices.filter { it.category.name != "BUILT_IN" }.size,
                             criticalIssues = critical,
                             warnings = warnings,
                             overallHealth = overallHealth

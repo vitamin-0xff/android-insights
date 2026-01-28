@@ -15,6 +15,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.phone_checker.data.monitors.AudioDevice
+import com.example.phone_checker.data.monitors.AudioDeviceCategory
+import com.example.phone_checker.data.monitors.AudioDeviceRole
 import com.example.phone_checker.data.repository.AudioDeviceHealth
 import com.example.phone_checker.data.repository.AudioHealthInfo
 import com.example.phone_checker.data.repository.AudioHealthStatus
@@ -77,6 +80,8 @@ fun AudioScreen(
             uiState.audioInfo != null -> {
                 AudioInfoContent(
                     audioInfo = uiState.audioInfo!!,
+                    inputDevices = uiState.inputDevices,
+                    outputDevices = uiState.outputDevices,
                     modifier = Modifier.padding(paddingValues)
                 )
             }
@@ -87,8 +92,13 @@ fun AudioScreen(
 @Composable
 fun AudioInfoContent(
     audioInfo: AudioHealthInfo,
+    inputDevices: List<AudioDevice> = emptyList(),
+    outputDevices: List<AudioDevice> = emptyList(),
     modifier: Modifier = Modifier
 ) {
+    // Filter out built-in devices to show only external devices
+    val externalInputDevices = inputDevices.filter { it.category != AudioDeviceCategory.BUILT_IN }
+    val externalOutputDevices = outputDevices.filter { it.category != AudioDeviceCategory.BUILT_IN }
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
@@ -234,6 +244,118 @@ fun AudioInfoContent(
             )
         }
 
+        item {
+            Text(
+                text = "Connected Devices",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+        }
+
+        // Device Statistics Card
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "${externalOutputDevices.size}",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Text(
+                            text = "Output",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                    HorizontalDivider(
+                        modifier = Modifier
+                            .height(40.dp)
+                            .width(1.dp),
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "${externalInputDevices.size}",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Text(
+                            text = "Input",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
+            }
+        }
+
+        if (externalOutputDevices.isNotEmpty()) {
+            item {
+                Text(
+                    text = "Output Devices",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            }
+            items(externalOutputDevices) { device ->
+                DeviceCard(device = device)
+            }
+        } else {
+            item {
+                Text(
+                    text = "No external output devices connected",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.outline,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+        }
+
+        if (externalInputDevices.isNotEmpty()) {
+            item {
+                Text(
+                    text = "Input Devices",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            }
+            items(externalInputDevices) { device ->
+                DeviceCard(device = device)
+            }
+        } else {
+            item {
+                Text(
+                    text = "No external input devices connected",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.outline,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+        }
+
         if (audioInfo.volumeWarnings.isNotEmpty()) {
             item {
                 Text(
@@ -333,6 +455,86 @@ private fun InfoCard(
     }
 }
 
+@Composable
+private fun DeviceCard(device: AudioDevice) {
+    val categoryColor = when (device.category) {
+        AudioDeviceCategory.BLUETOOTH -> MaterialTheme.colorScheme.primaryContainer
+        AudioDeviceCategory.WIRED -> MaterialTheme.colorScheme.secondaryContainer
+        AudioDeviceCategory.USB -> MaterialTheme.colorScheme.tertiaryContainer
+        AudioDeviceCategory.HDMI -> MaterialTheme.colorScheme.errorContainer
+        AudioDeviceCategory.BUILT_IN -> MaterialTheme.colorScheme.surfaceVariant
+        else -> MaterialTheme.colorScheme.surfaceVariant
+    }
+
+    val categoryTextColor = when (device.category) {
+        AudioDeviceCategory.BLUETOOTH -> MaterialTheme.colorScheme.onPrimaryContainer
+        AudioDeviceCategory.WIRED -> MaterialTheme.colorScheme.onSecondaryContainer
+        AudioDeviceCategory.USB -> MaterialTheme.colorScheme.onTertiaryContainer
+        AudioDeviceCategory.HDMI -> MaterialTheme.colorScheme.onErrorContainer
+        AudioDeviceCategory.BUILT_IN -> MaterialTheme.colorScheme.onSurfaceVariant
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = categoryColor)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = device.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = categoryTextColor
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "${device.category.name} • ${device.role.name}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = categoryTextColor
+                    )
+                }
+            }
+
+            if (device.sampleRates.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Sample Rates: ${device.sampleRates.joinToString(", ") { "$it Hz" }}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = categoryTextColor
+                )
+            }
+
+            if (device.channelCounts.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Channels: ${device.channelCounts.joinToString(", ")}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = categoryTextColor
+                )
+            }
+
+            if (device.address.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Address: ${device.address}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = categoryTextColor
+                )
+            }
+        }
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 fun AudioScreenPreview() {
@@ -343,7 +545,7 @@ fun AudioScreenPreview() {
                 speakerMaxVolume = 15,
                 microphoneStatus = MicrophoneStatus.AVAILABLE,
                 headphoneConnected = false,
-                bluetoothAudioConnected = false,
+                bluetoothAudioConnected = true,
                 musicActive = false,
                 callActive = false,
                 recordingActive = false,
@@ -352,7 +554,47 @@ fun AudioScreenPreview() {
                 headphoneHealth = AudioDeviceHealth.EXCELLENT,
                 volumeWarnings = emptyList(),
                 status = AudioHealthStatus.HEALTHY,
-                recommendation = "Audio system is healthy. Using speaker output."
+                recommendation = "Audio system is healthy. Using speaker output.",
+                inputDevices = listOf(
+                    AudioDevice(
+                        id = 1,
+                        name = "Built-in Microphone",
+                        type = 15,
+                        category = AudioDeviceCategory.BUILT_IN,
+                        role = AudioDeviceRole.INPUT,
+                        address = "",
+                        isWireless = false,
+                        sampleRates = intArrayOf(16000, 44100, 48000),
+                        channelCounts = intArrayOf(1, 2),
+                        connectionTime = 0L
+                    )
+                ),
+                outputDevices = listOf(
+                    AudioDevice(
+                        id = 2,
+                        name = "Built-in Speaker",
+                        type = 1,
+                        category = AudioDeviceCategory.BUILT_IN,
+                        role = AudioDeviceRole.OUTPUT,
+                        address = "",
+                        isWireless = false,
+                        sampleRates = intArrayOf(44100, 48000),
+                        channelCounts = intArrayOf(2),
+                        connectionTime = 0L
+                    ),
+                    AudioDevice(
+                        id = 3,
+                        name = "Bluetooth Headset",
+                        type = 8,
+                        category = AudioDeviceCategory.BLUETOOTH,
+                        role = AudioDeviceRole.BIDIRECTIONAL,
+                        address = "AA:BB:CC:DD:EE:FF",
+                        isWireless = true,
+                        sampleRates = intArrayOf(16000, 44100),
+                        channelCounts = intArrayOf(1, 2),
+                        connectionTime = System.currentTimeMillis()
+                    )
+                )
             )
         )
     }

@@ -91,7 +91,7 @@ fun AppNavGraph(
                 }
             )
         }
-        composable(Screen.Audio.route) {
+        composable(Screen.Devices.route) {
             AudioScreen(
                 onNavigateBack = {
                     navController.popBackStack()
