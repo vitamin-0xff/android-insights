@@ -5,7 +5,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
+import android.os.Build
 import android.util.Log
+import androidx.core.content.ContextCompat
 import com.example.phone_checker.data.repository.BatteryHealth
 import com.example.phone_checker.data.repository.BatteryInfo
 import com.example.phone_checker.data.repository.BatteryStatus
@@ -64,7 +66,9 @@ class BatteryMonitor @Inject constructor(
                 addAction(Intent.ACTION_POWER_DISCONNECTED)
             }
 
-            context.registerReceiver(batteryReceiver, intentFilter, Context.RECEIVER_EXPORTED)
+            // ContextCompat.registerReceiver handles API level differences internally
+            // For API 33+, it uses RECEIVER_EXPORTED by default (appropriate for battery intents)
+            ContextCompat.registerReceiver(context, batteryReceiver, intentFilter, ContextCompat.RECEIVER_EXPORTED)
             _isMonitoring.value = true
             Log.d(TAG, "Battery monitoring started")
 

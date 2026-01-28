@@ -5,7 +5,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.media.AudioManager
+import android.os.Build
 import android.util.Log
+import androidx.core.content.ContextCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -67,7 +69,9 @@ class AudioMonitor @Inject constructor(
                 addAction("android.media.AUDIO_BECOMING_NOISY")
             }
 
-            context.registerReceiver(audioDeviceReceiver, filter, Context.RECEIVER_EXPORTED)
+            // ContextCompat.registerReceiver handles API level differences internally
+            // For API 33+, it uses RECEIVER_EXPORTED by default (appropriate for audio intents)
+            ContextCompat.registerReceiver(context, audioDeviceReceiver, filter, ContextCompat.RECEIVER_EXPORTED)
             _isMonitoring.value = true
             Log.d(TAG, "Audio monitoring started")
 
@@ -109,7 +113,7 @@ class AudioMonitor @Inject constructor(
             val isWiredHeadsetOn = audioManager.isWiredHeadsetOn
 
             val outputAvailable = isSpeakerphoneOn || isBluetoothScoOn || isWiredHeadsetOn
-            val inputAvailable = audioManager.isMicrophoneMute == false
+            val inputAvailable = !audioManager.isMicrophoneMute
             val isHealthy = outputAvailable || inputAvailable
 
             _audioDeviceState.value = AudioDeviceState(
