@@ -16,6 +16,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.lang.Class.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -202,7 +203,7 @@ class BatteryMonitor @Inject constructor(
                 timeToFullMinutes = timeToFull,
                 timeToEmptyMinutes = null,
                 healthPercent = healthPercent,
-                maxCapacityMah = maxCapacityMah,
+                maxCapacityMah = maxCapacityMah ?: getBatteryCapacity(context).toInt(),
                 maxEnergyNwh = maxEnergyNwh
             )
 
@@ -211,6 +212,30 @@ class BatteryMonitor @Inject constructor(
         } catch (e: Exception) {
             Log.e(TAG, "Error updating battery info", e)
         }
+    }
+
+
+    // Source - https://stackoverflow.com/a
+    // Posted by Domenico
+    // Retrieved 2026-01-29, License - CC BY-SA 3.0
+    fun getBatteryCapacity(context: Context?): Double {
+        val mPowerProfile: Any?
+        var batteryCapacity = 0.0
+        val POWER_PROFILE_CLASS = "com.android.internal.os.PowerProfile"
+
+        try {
+            mPowerProfile = forName(POWER_PROFILE_CLASS)
+                .getConstructor(Context::class.java)
+                .newInstance(context)
+
+            batteryCapacity = forName(POWER_PROFILE_CLASS)
+                .getMethod("getBatteryCapacity")
+                .invoke(mPowerProfile) as Double
+        } catch (e: java.lang.Exception) {
+            e.printStackTrace()
+        }
+
+        return batteryCapacity
     }
 
     private fun getMaxCapacityFromSystemFiles(): Int? {
