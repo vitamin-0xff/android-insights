@@ -158,6 +158,17 @@ class BatteryMonitor @Inject constructor(
             val energyCounterNwh = batteryManager.getLongProperty(BatteryManager.BATTERY_PROPERTY_ENERGY_COUNTER)
             val energyCounter = if (energyCounterNwh > 0) energyCounterNwh else null
 
+            // Get max capacity info - use system files
+            val maxCapacityMah = getMaxCapacityFromSystemFiles()
+            val maxEnergyNwh = if (maxCapacityMah != null && voltage > 0) {
+                try {
+                    // Energy (nWh) = Capacity (mAh) × Voltage (mV)
+                    (maxCapacityMah.toLong() * voltage).toLong()
+                } catch (e: Exception) {
+                    null
+                }
+            } else null
+
             // Time estimates for API 28+ (P)
             val timeToFull = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 try {
@@ -190,13 +201,44 @@ class BatteryMonitor @Inject constructor(
                 chargingType = chargingType,
                 timeToFullMinutes = timeToFull,
                 timeToEmptyMinutes = null,
-                healthPercent = healthPercent
+                healthPercent = healthPercent,
+                maxCapacityMah = maxCapacityMah,
+                maxEnergyNwh = maxEnergyNwh
             )
 
             _batteryInfo.value = batteryData
-            Log.d(TAG, "Battery info updated: level=$batteryPct%, temp=${temperature}C, status=$status")
+            Log.d(TAG, "Battery info updated: level=$batteryPct%, temp=${temperature}C, max=${maxCapacityMah}mAh, status=$status")
         } catch (e: Exception) {
             Log.e(TAG, "Error updating battery info", e)
+        }
+    }
+
+    private fun getMaxCapacityFromSystemFiles(): Int? {
+        return try {
+            val paths = listOf(
+                "/sys/class/power_supply/battery/charge_full_design",
+                "/sys/class/power_supply/battery/energy_full_design",
+                "/sys/class/power_supply/battery/charge_full",
+                "/sys/class/power_supply/bms/charge_full"
+            )
+
+            for (path in paths) {
+                try {
+                    val file = java.io.File(path)
+                    if (file.exists()) {
+                        val capacityStr = file.readText().trim()
+                        val capacityUa = capacityStr.toLongOrNull() ?: continue
+                        // Convert microAh to mAh
+                        return (capacityUa / 1000).toInt()
+                    }
+                } catch (e: Exception) {
+                    continue
+                }
+            }
+            null
+        } catch (e: Exception) {
+            Log.e(TAG, "Error reading max capacity from system files", e)
+            null
         }
     }
 }

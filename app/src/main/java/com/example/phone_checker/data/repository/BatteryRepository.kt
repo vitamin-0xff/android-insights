@@ -23,7 +23,9 @@ data class BatteryInfo(
     val chargingType: ChargingType,
     val timeToFullMinutes: Int?,
     val timeToEmptyMinutes: Int?,
-    val healthPercent: Int?
+    val healthPercent: Int?,
+    val maxCapacityMah: Int?,
+    val maxEnergyNwh: Long?
 )
 
 enum class BatteryHealth {

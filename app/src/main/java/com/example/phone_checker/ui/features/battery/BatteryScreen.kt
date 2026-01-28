@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -90,6 +91,9 @@ fun BatteryInfoContent(
     batteryInfo: BatteryInfo,
     modifier: Modifier = Modifier
 ) {
+    SideEffect {
+        println("Max mAH ${batteryInfo.maxCapacityMah}")
+    }
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -222,6 +226,74 @@ fun BatteryInfoContent(
                 value = "$it cycles"
             )
         }
+
+        batteryInfo.maxCapacityMah?.let { maxCapacity ->
+            val currentCapacity = batteryInfo.chargeCounterMah ?: 0
+            val capacityPercent = if (maxCapacity > 0) {
+                (currentCapacity * 100) / maxCapacity
+            } else {
+                0
+            }
+            
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = when {
+                        capacityPercent >= 80 -> MaterialTheme.colorScheme.primaryContainer
+                        capacityPercent >= 60 -> MaterialTheme.colorScheme.tertiaryContainer
+                        else -> MaterialTheme.colorScheme.errorContainer
+                    }
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Battery Capacity",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(
+                            text = "$capacityPercent%",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    Text(
+                        text = "$currentCapacity / $maxCapacity mAh",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    LinearProgressIndicator(
+                        progress = capacityPercent / 100f,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(8.dp),
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                }
+            }
+        }
+
+        batteryInfo.maxEnergyNwh?.let { maxEnergy ->
+            val currentEnergy = batteryInfo.energyCounterNwh ?: 0
+            val energyPercent = if (maxEnergy > 0) {
+                (currentEnergy * 100) / maxEnergy
+            } else {
+                0
+            }
+            
+            InfoCard(
+                title = "Max Energy Capacity",
+                value = "${maxEnergy / 1000000} mWh"
+            )
+        }
     }
 }
 
@@ -280,7 +352,9 @@ fun BatteryScreenPreview() {
                 chargingType = ChargingType.AC,
                 timeToFullMinutes = 45,
                 timeToEmptyMinutes = null,
-                healthPercent = 88
+                healthPercent = 88,
+                maxCapacityMah = 4000,
+                maxEnergyNwh = 15600000000
             )
         )
     }

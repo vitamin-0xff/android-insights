@@ -187,6 +187,62 @@ fun ScreenHealthInfoContent(
             title = "Display Count",
             value = screenHealthInfo.displayCount.toString()
         )
+
+        // DPI and Pixel Density Section
+        Text(
+            text = "DPI & Pixel Density",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+
+        InfoCard(
+            title = "Horizontal DPI (X)",
+            value = String.format("%.2f", screenHealthInfo.xDpi)
+        )
+
+        InfoCard(
+            title = "Vertical DPI (Y)",
+            value = String.format("%.2f", screenHealthInfo.yDpi)
+        )
+
+        InfoCard(
+            title = "Density",
+            value = String.format("%.2f", screenHealthInfo.density)
+        )
+
+        InfoCard(
+            title = "Scaled Density",
+            value = String.format("%.2f", screenHealthInfo.scaledDensity)
+        )
+
+        // Physical Dimensions Section
+        Text(
+            text = "Physical Dimensions",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+
+        InfoCard(
+            title = "Aspect Ratio",
+            value = screenHealthInfo.aspectRatio
+        )
+
+        InfoCard(
+            title = "Width (Physical)",
+            value = String.format("%.2f inches", screenHealthInfo.physicalWidth)
+        )
+
+        InfoCard(
+            title = "Height (Physical)",
+            value = String.format("%.2f inches", screenHealthInfo.physicalHeight)
+        )
+
+        InfoCard(
+            title = "Diagonal Size",
+            value = String.format("%.2f inches", screenHealthInfo.diagonalInches)
+        )
     }
 }
 
@@ -240,7 +296,15 @@ fun ScreenHealthScreenPreview() {
                 displayState = Display.STATE_ON,
                 isHdr = true,
                 isWideColorGamut = true,
-                displayCount = 1
+                displayCount = 1,
+                xDpi = 420f,
+                yDpi = 420f,
+                scaledDensity = 2.625f,
+                density = 2.625f,
+                physicalWidth = 2.57f,
+                physicalHeight = 5.71f,
+                diagonalInches = 6.3f,
+                aspectRatio = "9:20"
             )
         )
     }

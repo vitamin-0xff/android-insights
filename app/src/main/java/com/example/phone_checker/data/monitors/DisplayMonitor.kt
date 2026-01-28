@@ -27,7 +27,15 @@ data class DisplayState(
     val rotation: Int = 0,
     val displayState: Int = Display.STATE_UNKNOWN,
     val isHdr: Boolean = false,
-    val isWideColorGamut: Boolean = false
+    val isWideColorGamut: Boolean = false,
+    val xDpi: Float = 0f,
+    val yDpi: Float = 0f,
+    val scaledDensity: Float = 0f,
+    val density: Float = 0f,
+    val physicalWidth: Float = 0f,
+    val physicalHeight: Float = 0f,
+    val diagonalInches: Float = 0f,
+    val aspectRatio: String = ""
 )
 
 @Singleton
@@ -154,6 +162,24 @@ class DisplayMonitor @Inject constructor(
                 false
             }
 
+            // Calculate DPI and physical dimensions
+            val xDpi = metrics.xdpi
+            val yDpi = metrics.ydpi
+            val density = metrics.density
+            @Suppress("DEPRECATION")
+            val scaledDensity = metrics.scaledDensity
+            
+            // Calculate physical dimensions in inches
+            val physicalWidth = width / xDpi
+            val physicalHeight = height / yDpi
+            val diagonalInches = kotlin.math.sqrt((physicalWidth * physicalWidth) + (physicalHeight * physicalHeight))
+            
+            // Calculate aspect ratio
+            val gcd = gcd(width, height)
+            val aspectRatioWidth = width / gcd
+            val aspectRatioHeight = height / gcd
+            val aspectRatio = "$aspectRatioWidth:$aspectRatioHeight"
+
             _displayState.value = DisplayState(
                 displayName = displayName,
                 primaryDisplayWidth = width,
@@ -166,15 +192,27 @@ class DisplayMonitor @Inject constructor(
                 rotation = rotation,
                 displayState = displayState,
                 isHdr = isHdr,
-                isWideColorGamut = isWideColorGamut
+                isWideColorGamut = isWideColorGamut,
+                xDpi = xDpi,
+                yDpi = yDpi,
+                scaledDensity = scaledDensity,
+                density = density,
+                physicalWidth = physicalWidth,
+                physicalHeight = physicalHeight,
+                diagonalInches = diagonalInches,
+                aspectRatio = aspectRatio
             )
 
             Log.d(
                 TAG,
-                "Display state updated: ${width}x${height}, refreshRate=${refreshRate}Hz, suggested=${suggestedFrameRate}Hz, count=$displayCount"
+                "Display state updated: ${width}x${height}, dpi=${metrics.densityDpi}, aspect=$aspectRatio, diagonal=${String.format("%.2f", diagonalInches)}in"
             )
         } catch (e: Exception) {
             Log.e(TAG, "Error updating display state", e)
         }
+    }
+
+    private fun gcd(a: Int, b: Int): Int {
+        return if (b == 0) a else gcd(b, a % b)
     }
 }

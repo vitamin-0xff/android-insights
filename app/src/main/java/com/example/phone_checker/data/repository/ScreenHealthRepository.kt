@@ -18,7 +18,15 @@ data class ScreenHealthInfo(
     val displayState: Int,
     val isHdr: Boolean,
     val isWideColorGamut: Boolean,
-    val displayCount: Int
+    val displayCount: Int,
+    val xDpi: Float,
+    val yDpi: Float,
+    val scaledDensity: Float,
+    val density: Float,
+    val physicalWidth: Float,
+    val physicalHeight: Float,
+    val diagonalInches: Float,
+    val aspectRatio: String
 )
 
 interface ScreenHealthRepository {
@@ -43,7 +51,15 @@ class ScreenHealthRepositoryImpl @Inject constructor(
             displayState = displayState.displayState,
             isHdr = displayState.isHdr,
             isWideColorGamut = displayState.isWideColorGamut,
-            displayCount = displayState.displayCount
+            displayCount = displayState.displayCount,
+            xDpi = displayState.xDpi,
+            yDpi = displayState.yDpi,
+            scaledDensity = displayState.scaledDensity,
+            density = displayState.density,
+            physicalWidth = displayState.physicalWidth,
+            physicalHeight = displayState.physicalHeight,
+            diagonalInches = displayState.diagonalInches,
+            aspectRatio = displayState.aspectRatio
         )
     }
 }
