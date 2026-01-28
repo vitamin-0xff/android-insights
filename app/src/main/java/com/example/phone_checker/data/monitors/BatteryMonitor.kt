@@ -203,7 +203,7 @@ class BatteryMonitor @Inject constructor(
                 timeToFullMinutes = timeToFull,
                 timeToEmptyMinutes = null,
                 healthPercent = healthPercent,
-                maxCapacityMah = maxCapacityMah ?: getBatteryCapacity(context).toInt(),
+                maxCapacityMah = maxCapacityMah ?: getBatteryCapacity(context)?.toInt(),
                 maxEnergyNwh = maxEnergyNwh
             )
 
@@ -218,7 +218,7 @@ class BatteryMonitor @Inject constructor(
     // Source - https://stackoverflow.com/a
     // Posted by Domenico
     // Retrieved 2026-01-29, License - CC BY-SA 3.0
-    fun getBatteryCapacity(context: Context?): Double {
+    fun getBatteryCapacity(context: Context?): Double? {
         val mPowerProfile: Any?
         var batteryCapacity = 0.0
         val POWER_PROFILE_CLASS = "com.android.internal.os.PowerProfile"
