@@ -19,6 +19,7 @@ import com.example.phone_checker.data.repository.CellularGeneration
 import com.example.phone_checker.data.repository.NetworkInfo
 import com.example.phone_checker.data.repository.NetworkType
 import com.example.phone_checker.data.repository.WiFiFrequencyBand
+import com.example.phone_checker.ui.components.InfoRowCard
 import com.example.phone_checker.ui.theme.PhonecheckerTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -131,54 +132,54 @@ fun NetworkInfoContent(
             }
         }
 
-        InfoCard(
+        InfoRowCard(
             title = "Network Type",
             value = networkInfo.networkType.name
         )
 
         networkInfo.ssid?.let { ssid ->
-            InfoCard(
+            InfoRowCard(
                 title = "WiFi Network",
                 value = ssid
             )
         }
 
-        InfoCard(
+        InfoRowCard(
             title = "Signal Strength",
             value = "${networkInfo.signalStrength}%"
         )
 
         networkInfo.ipv4Address?.let { ipv4 ->
-            InfoCard(
+            InfoRowCard(
                 title = "IPv4 Address",
                 value = ipv4
             )
         }
 
         networkInfo.ipv6Address?.let { ipv6 ->
-            InfoCard(
+            InfoRowCard(
                 title = "IPv6 Address",
                 value = ipv6
             )
         }
 
-        InfoCard(
+        InfoRowCard(
             title = "Internet Capable",
             value = if (networkInfo.hasInternet) "Yes" else "No"
         )
 
-        InfoCard(
+        InfoRowCard(
             title = "Metered Connection",
             value = if (networkInfo.isMetered) "Yes" else "No"
         )
 
-        InfoCard(
+        InfoRowCard(
             title = "VPN Connected",
             value = if (networkInfo.isVpnConnected) "Yes" else "No"
         )
 
         networkInfo.wifiFrequencyBand?.let { band ->
-            InfoCard(
+            InfoRowCard(
                 title = "WiFi Frequency Band",
                 value = when (band) {
                     WiFiFrequencyBand.BAND_2_4_GHZ -> "2.4 GHz"
@@ -190,7 +191,7 @@ fun NetworkInfoContent(
         }
 
         networkInfo.cellularGeneration?.let { gen ->
-            InfoCard(
+            InfoRowCard(
                 title = "Cellular Generation",
                 value = when (gen) {
                     CellularGeneration.GENERATION_2G -> "2G"
@@ -199,39 +200,6 @@ fun NetworkInfoContent(
                     CellularGeneration.GENERATION_5G -> "5G"
                     CellularGeneration.UNKNOWN -> "Unknown"
                 }
-            )
-        }
-    }
-}
-
-@Composable
-private fun InfoCard(
-    title: String,
-    value: String
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

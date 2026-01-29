@@ -18,6 +18,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import android.view.Display
 import android.view.Surface
 import com.example.phone_checker.data.repository.ScreenHealthInfo
+import com.example.phone_checker.ui.components.InfoRowCard
 import com.example.phone_checker.ui.theme.PhonecheckerTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -158,32 +159,32 @@ fun ScreenHealthInfoContent(
             }
         }
 
-        InfoCard(
+        InfoRowCard(
             title = "Suggested Frame Rate",
             value = formatSuggestedFrameRate(screenHealthInfo.suggestedFrameRate)
         )
 
-        InfoCard(
+        InfoRowCard(
             title = "Supported Refresh Rates",
             value = formatSupportedRates(screenHealthInfo.supportedRefreshRates)
         )
 
-        InfoCard(
+        InfoRowCard(
             title = "Density",
             value = "${screenHealthInfo.densityDpi} dpi"
         )
 
-        InfoCard(
+        InfoRowCard(
             title = "Rotation",
             value = formatRotation(screenHealthInfo.rotation)
         )
 
-        InfoCard(
+        InfoRowCard(
             title = "Display State",
             value = formatDisplayState(screenHealthInfo.displayState)
         )
 
-        InfoCard(
+        InfoRowCard(
             title = "Display Count",
             value = screenHealthInfo.displayCount.toString()
         )
@@ -196,22 +197,22 @@ fun ScreenHealthInfoContent(
             modifier = Modifier.padding(top = 8.dp)
         )
 
-        InfoCard(
+        InfoRowCard(
             title = "Horizontal DPI (X)",
             value = String.format("%.2f", screenHealthInfo.xDpi)
         )
 
-        InfoCard(
+        InfoRowCard(
             title = "Vertical DPI (Y)",
             value = String.format("%.2f", screenHealthInfo.yDpi)
         )
 
-        InfoCard(
+        InfoRowCard(
             title = "Density",
             value = String.format("%.2f", screenHealthInfo.density)
         )
 
-        InfoCard(
+        InfoRowCard(
             title = "Scaled Density",
             value = String.format("%.2f", screenHealthInfo.scaledDensity)
         )
@@ -224,58 +225,25 @@ fun ScreenHealthInfoContent(
             modifier = Modifier.padding(top = 8.dp)
         )
 
-        InfoCard(
+        InfoRowCard(
             title = "Aspect Ratio",
             value = screenHealthInfo.aspectRatio
         )
 
-        InfoCard(
+        InfoRowCard(
             title = "Width (Physical)",
             value = String.format("%.2f inches", screenHealthInfo.physicalWidth)
         )
 
-        InfoCard(
+        InfoRowCard(
             title = "Height (Physical)",
             value = String.format("%.2f inches", screenHealthInfo.physicalHeight)
         )
 
-        InfoCard(
+        InfoRowCard(
             title = "Diagonal Size",
             value = String.format("%.2f inches", screenHealthInfo.diagonalInches)
         )
-    }
-}
-
-@Composable
-private fun InfoCard(
-    title: String,
-    value: String
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
     }
 }
 

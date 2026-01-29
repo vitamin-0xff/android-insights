@@ -23,6 +23,7 @@ import com.example.phone_checker.data.repository.AudioHealthInfo
 import com.example.phone_checker.data.repository.AudioHealthStatus
 import com.example.phone_checker.data.repository.MicrophoneStatus
 import com.example.phone_checker.ui.theme.PhonecheckerTheme
+import com.example.phone_checker.ui.components.InfoRowCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -210,35 +211,35 @@ fun AudioInfoContent(
         }
 
         item {
-            InfoCard(
+            InfoRowCard(
                 title = "Microphone Status",
                 value = audioInfo.microphoneStatus.name
             )
         }
 
         item {
-            InfoCard(
+            InfoRowCard(
                 title = "Headphone Connected",
                 value = if (audioInfo.headphoneConnected) "Yes" else "No"
             )
         }
 
         item {
-            InfoCard(
+            InfoRowCard(
                 title = "Bluetooth Audio",
                 value = if (audioInfo.bluetoothAudioConnected) "Connected" else "Disconnected"
             )
         }
 
         item {
-            InfoCard(
+            InfoRowCard(
                 title = "Music Active",
                 value = if (audioInfo.musicActive) "Yes" else "No"
             )
         }
 
         item {
-            InfoCard(
+            InfoRowCard(
                 title = "Call Active",
                 value = if (audioInfo.callActive) "Yes" else "No"
             )
@@ -422,38 +423,6 @@ private fun HealthCard(
     }
 }
 
-@Composable
-private fun InfoCard(
-    title: String,
-    value: String
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
 
 @Composable
 private fun DeviceCard(device: AudioDevice) {

@@ -15,6 +15,7 @@ import com.example.phone_checker.ui.features.performance.PerformanceScreen
 import com.example.phone_checker.ui.features.screen.ScreenHealthScreen
 import com.example.phone_checker.ui.features.sensors.SensorsScreen
 import com.example.phone_checker.ui.features.storage.StorageScreen
+import com.example.phone_checker.ui.features.system.SystemInfoScreen
 import com.example.phone_checker.ui.features.thermal.ThermalScreen
 
 @Composable
@@ -107,6 +108,13 @@ fun AppNavGraph(
         }
         composable(Screen.Insights.route) {
             InsightsScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+        composable(Screen.System.route) {
+            SystemInfoScreen(
                 onNavigateBack = {
                     navController.popBackStack()
                 }

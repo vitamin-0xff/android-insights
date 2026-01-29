@@ -11,12 +11,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.phone_checker.data.repository.PerformanceInfo
 import com.example.phone_checker.data.repository.PerformanceStatus
+import com.example.phone_checker.ui.components.InfoRowCard
 import com.example.phone_checker.ui.theme.PhonecheckerTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -94,118 +96,83 @@ fun PerformanceInfoContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Status Card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = when (performanceInfo.status) {
-                    PerformanceStatus.EXCELLENT -> MaterialTheme.colorScheme.primaryContainer
-                    PerformanceStatus.GOOD -> MaterialTheme.colorScheme.secondaryContainer
-                    PerformanceStatus.MODERATE -> MaterialTheme.colorScheme.tertiaryContainer
-                    PerformanceStatus.POOR -> MaterialTheme.colorScheme.errorContainer
-                }
-            )
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "Performance Status",
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = performanceInfo.status.name,
-                    style = MaterialTheme.typography.displaySmall,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
+        PerformanceStatusCard(
+            status = performanceInfo.status,
+            cpuUsagePercent = performanceInfo.cpuUsagePercent,
+            ramUsagePercent = performanceInfo.ramUsagePercent
+        )
 
-        // CPU Usage
-        InfoCard(
+        SectionHeader(title = "CPU")
+
+        InfoRowCard(
             title = "CPU Usage",
             value = "${performanceInfo.cpuUsagePercent.toInt()}%"
         )
 
-        InfoCard(
+        InfoRowCard(
             title = "CPU Cores",
             value = "${performanceInfo.cpuCores}"
         )
 
         performanceInfo.cpuMaxFrequencyMhz?.let { maxFreq ->
-            InfoCard(
+            InfoRowCard(
                 title = "CPU Max Frequency",
                 value = "${maxFreq} MHz"
             )
         }
 
         performanceInfo.cpuCurrentFrequencyMhz?.let { currentFreq ->
-            InfoCard(
+            InfoRowCard(
                 title = "CPU Current Frequency",
                 value = "${currentFreq} MHz"
             )
         }
 
-        Text(
-            text = "Memory Information",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(top = 8.dp)
-        )
+        SectionHeader(title = "Memory")
 
-        // RAM Usage
-        InfoCard(
+        InfoRowCard(
             title = "RAM Usage",
             value = "${performanceInfo.ramUsagePercent}%"
         )
 
-        InfoCard(
+        InfoRowCard(
             title = "Total RAM",
             value = "${performanceInfo.totalRamMb} MB"
         )
 
-        InfoCard(
+        InfoRowCard(
             title = "Available RAM",
             value = "${performanceInfo.availableRamMb} MB"
         )
 
-        InfoCard(
+        InfoRowCard(
             title = "Used RAM",
             value = "${performanceInfo.usedRamMb} MB"
         )
 
-        InfoCard(
+        InfoRowCard(
             title = "App Memory Usage",
             value = "${performanceInfo.appMemoryUsageMb.toInt()} MB"
         )
 
-        InfoCard(
+        InfoRowCard(
             title = "Native Heap",
             value = "${performanceInfo.nativeHeapMb.toInt()} MB"
         )
 
-        InfoCard(
+        InfoRowCard(
             title = "Dalvik Heap",
             value = "${performanceInfo.dalvikHeapMb.toInt()} MB"
         )
 
-        Text(
-            text = "Process Information",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(top = 8.dp)
-        )
+        SectionHeader(title = "Processes")
 
-        InfoCard(
+        InfoRowCard(
             title = "Active Threads",
             value = "${performanceInfo.threadCount}"
         )
 
-        InfoCard(
+        InfoRowCard(
             title = "Running Processes",
             value = "${performanceInfo.appProcesses}"
         )
@@ -213,35 +180,108 @@ fun PerformanceInfoContent(
 }
 
 @Composable
-private fun InfoCard(
+private fun SectionHeader(
     title: String,
-    value: String
+    modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+    Column(modifier = modifier) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
         )
+        Spacer(modifier = Modifier.height(6.dp))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+    }
+}
+
+@Composable
+private fun PerformanceStatusCard(
+    status: PerformanceStatus,
+    cpuUsagePercent: Float,
+    ramUsagePercent: Int,
+    modifier: Modifier = Modifier
+) {
+    val (containerColor, contentColor) = when (status) {
+        PerformanceStatus.EXCELLENT ->
+            MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
+        PerformanceStatus.GOOD ->
+            MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondaryContainer
+        PerformanceStatus.MODERATE ->
+            MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
+        PerformanceStatus.POOR ->
+            MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.onErrorContainer
+    }
+
+    ElevatedCard(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.elevatedCardColors(containerColor = containerColor)
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(20.dp)
+        ) {
+            Text(
+                text = "Performance Status",
+                style = MaterialTheme.typography.titleMedium,
+                color = contentColor
+            )
+            Text(
+                text = status.name,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = contentColor
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            MetricRow(
+                label = "CPU Usage",
+                value = "${cpuUsagePercent.toInt()}%",
+                progress = (cpuUsagePercent / 100f).coerceIn(0f, 1f),
+                color = contentColor
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            MetricRow(
+                label = "RAM Usage",
+                value = "${ramUsagePercent}%",
+                progress = (ramUsagePercent / 100f).coerceIn(0f, 1f),
+                color = contentColor
+            )
+        }
+    }
+}
+
+@Composable
+private fun MetricRow(
+    label: String,
+    value: String,
+    progress: Float,
+    color: Color
+) {
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = color
             )
             Text(
                 text = value,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = color
             )
         }
+        Spacer(modifier = Modifier.height(6.dp))
+        LinearProgressIndicator(
+            progress = { progress },
+            color = color,
+            trackColor = color.copy(alpha = 0.2f)
+        )
     }
 }
 

@@ -21,6 +21,8 @@ import com.example.phone_checker.data.repository.AppDrain
 import com.example.phone_checker.data.repository.AppMemoryInfo
 import com.example.phone_checker.data.repository.AppUpdateInfo
 import com.example.phone_checker.data.repository.UsageInterval
+import com.example.phone_checker.ui.components.InfoRowCard
+import com.example.phone_checker.ui.components.EntityCard
 import com.example.phone_checker.ui.theme.PhonecheckerTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -188,56 +190,56 @@ fun AppBehaviorInfoContent(
         }
 
         item {
-            InfoCard(
+            InfoRowCard(
                 title = "Total Apps",
                 value = "${appBehaviorInfo.totalAppsInstalled}"
             )
         }
 
         item {
-            InfoCard(
+            InfoRowCard(
                 title = "User Apps",
                 value = "${appBehaviorInfo.userApps}"
             )
         }
 
         item {
-            InfoCard(
+            InfoRowCard(
                 title = "System Apps",
                 value = "${appBehaviorInfo.systemApps}"
             )
         }
 
         item {
-            InfoCard(
+            InfoRowCard(
                 title = "Running Apps",
                 value = "${appBehaviorInfo.runningApps}"
             )
         }
 
         item {
-            InfoCard(
+            InfoRowCard(
                 title = "Launchable Apps",
                 value = "${appBehaviorInfo.launchableApps}"
             )
         }
 
         item {
-            InfoCard(
+            InfoRowCard(
                 title = "Disabled Apps",
                 value = "${appBehaviorInfo.disabledApps}"
             )
         }
 
         item {
-            InfoCard(
+            InfoRowCard(
                 title = "Total Memory Usage",
                 value = "${appBehaviorInfo.totalMemoryUsageMb} MB"
             )
         }
 
         item {
-            InfoCard(
+            InfoRowCard(
                 title = "Recently Updated (7 days)",
                 value = "${appBehaviorInfo.recentlyUpdatedApps}"
             )
@@ -254,7 +256,12 @@ fun AppBehaviorInfoContent(
             }
 
             items(appBehaviorInfo.topMemoryApps) { app ->
-                AppMemoryCard(app = app)
+                EntityCard(
+                    title = app.appName,
+                    subtitle = app.packageName,
+                    rightValue = "${app.memoryUsageMb} MB",
+                    rightLabel = "Memory"
+                )
             }
         }
 
@@ -269,7 +276,14 @@ fun AppBehaviorInfoContent(
             }
 
             items(appBehaviorInfo.topDrainApps) { app ->
-                AppDrainCard(app = app)
+                val hours = app.usageTimeMinutes / 60
+                val minutes = app.usageTimeMinutes % 60
+                EntityCard(
+                    title = app.appName,
+                    subtitle = app.packageName,
+                    rightValue = if (hours > 0) "${hours}h ${minutes}m" else "${minutes}m",
+                    rightLabel = "Usage"
+                )
             }
         }
 
@@ -284,194 +298,17 @@ fun AppBehaviorInfoContent(
             }
 
             items(appBehaviorInfo.recentUpdates) { app ->
-                AppUpdateCard(app = app)
+                EntityCard(
+                    title = app.appName,
+                    subtitle = app.packageName,
+                    rightValue = when (app.updateDaysAgo) {
+                        0 -> "Today"
+                        1 -> "Yesterday"
+                        else -> "${app.updateDaysAgo} days ago"
+                    },
+                    rightLabel = "Updated"
+                )
             }
-        }
-    }
-}
-
-@Composable
-private fun AppMemoryCard(app: AppMemoryInfo) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = app.appName,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = app.packageName,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                    )
-                }
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = "${app.memoryUsageMb} MB",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "Memory",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun AppUpdateCard(app: AppUpdateInfo) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = app.appName,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = app.packageName,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                    )
-                }
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = when (app.updateDaysAgo) {
-                            0 -> "Today"
-                            1 -> "Yesterday"
-                            else -> "${app.updateDaysAgo} days ago"
-                        },
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "Updated",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun AppDrainCard(app: AppDrain) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = app.appName,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = app.packageName,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                    )
-                }
-                Column(horizontalAlignment = Alignment.End) {
-                    val hours = app.usageTimeMinutes / 60
-                    val minutes = app.usageTimeMinutes % 60
-                    Text(
-                        text = if (hours > 0) "${hours}h ${minutes}m" else "${minutes}m",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "Today",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun InfoCard(
-    title: String,
-    value: String
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }

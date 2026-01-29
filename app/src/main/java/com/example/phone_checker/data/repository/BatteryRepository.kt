@@ -35,7 +35,7 @@ enum class BatteryHealth {
 enum class BatteryStatus {
     CHARGING, DISCHARGING, NOT_CHARGING, FULL, UNKNOWN
 }
-
+    
 enum class ChargingType {
     AC, USB, WIRELESS, DOCK, NONE, UNKNOWN
 }

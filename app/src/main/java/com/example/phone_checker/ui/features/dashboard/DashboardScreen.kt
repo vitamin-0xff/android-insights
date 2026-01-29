@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import android.os.Build
 import android.view.Display
 import com.example.phone_checker.ui.theme.PhonecheckerTheme
 
@@ -124,6 +125,7 @@ fun DashboardScreen(
         HealthMetric("Running Apps", "${uiState.appsRunning}", appsStatus, Icons.AutoMirrored.Filled.List, "app_behavior"),
         HealthMetric("Sensors", uiState.sensorsHealth, sensorsStatus, Icons.Default.Settings, "sensors"),
         HealthMetric("I/O", "${uiState.audioInputDevices}in/${uiState.audioOutputDevices}out", HealthStatus.GOOD, Icons.Default.Settings, "devices"),
+        HealthMetric("System", "Android ${Build.VERSION.RELEASE}", HealthStatus.UNKNOWN, Icons.Default.Settings, "system")
     )
 
     Scaffold(
