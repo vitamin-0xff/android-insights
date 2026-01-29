@@ -18,6 +18,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.phone_checker.data.repository.AppBehaviorInfo
 import com.example.phone_checker.data.repository.AppBehaviorStatus
 import com.example.phone_checker.data.repository.AppDrain
+import com.example.phone_checker.data.repository.AppMemoryInfo
+import com.example.phone_checker.data.repository.AppUpdateInfo
+import com.example.phone_checker.data.repository.UsageInterval
 import com.example.phone_checker.ui.theme.PhonecheckerTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -76,6 +79,8 @@ fun AppBehaviorScreen(
             uiState.appBehaviorInfo != null -> {
                 AppBehaviorInfoContent(
                     appBehaviorInfo = uiState.appBehaviorInfo!!,
+                    selectedInterval = uiState.selectedInterval,
+                    onIntervalChange = { viewModel.changeInterval(it) },
                     modifier = Modifier.padding(paddingValues)
                 )
             }
@@ -86,6 +91,8 @@ fun AppBehaviorScreen(
 @Composable
 fun AppBehaviorInfoContent(
     appBehaviorInfo: AppBehaviorInfo,
+    selectedInterval: UsageInterval,
+    onIntervalChange: (UsageInterval) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -93,6 +100,47 @@ fun AppBehaviorInfoContent(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        item {
+            // Interval Selector
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Usage Time Period",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        UsageInterval.values().forEach { interval ->
+                            FilterChip(
+                                selected = selectedInterval == interval,
+                                onClick = { onIntervalChange(interval) },
+                                label = { 
+                                    Text(
+                                        interval.displayName,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
         item {
             // Status Card
             Card(
@@ -167,6 +215,49 @@ fun AppBehaviorInfoContent(
             )
         }
 
+        item {
+            InfoCard(
+                title = "Launchable Apps",
+                value = "${appBehaviorInfo.launchableApps}"
+            )
+        }
+
+        item {
+            InfoCard(
+                title = "Disabled Apps",
+                value = "${appBehaviorInfo.disabledApps}"
+            )
+        }
+
+        item {
+            InfoCard(
+                title = "Total Memory Usage",
+                value = "${appBehaviorInfo.totalMemoryUsageMb} MB"
+            )
+        }
+
+        item {
+            InfoCard(
+                title = "Recently Updated (7 days)",
+                value = "${appBehaviorInfo.recentlyUpdatedApps}"
+            )
+        }
+
+        if (appBehaviorInfo.topMemoryApps.isNotEmpty()) {
+            item {
+                Text(
+                    text = "Top Memory Consuming Apps",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            }
+
+            items(appBehaviorInfo.topMemoryApps) { app ->
+                AppMemoryCard(app = app)
+            }
+        }
+
         if (appBehaviorInfo.topDrainApps.isNotEmpty()) {
             item {
                 Text(
@@ -179,6 +270,123 @@ fun AppBehaviorInfoContent(
 
             items(appBehaviorInfo.topDrainApps) { app ->
                 AppDrainCard(app = app)
+            }
+        }
+
+        if (appBehaviorInfo.recentUpdates.isNotEmpty()) {
+            item {
+                Text(
+                    text = "Recently Updated Apps",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            }
+
+            items(appBehaviorInfo.recentUpdates) { app ->
+                AppUpdateCard(app = app)
+            }
+        }
+    }
+}
+
+@Composable
+private fun AppMemoryCard(app: AppMemoryInfo) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = app.appName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = app.packageName,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    )
+                }
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = "${app.memoryUsageMb} MB",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "Memory",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AppUpdateCard(app: AppUpdateInfo) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = app.appName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = app.packageName,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    )
+                }
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = when (app.updateDaysAgo) {
+                            0 -> "Today"
+                            1 -> "Yesterday"
+                            else -> "${app.updateDaysAgo} days ago"
+                        },
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "Updated",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    )
+                }
             }
         }
     }
@@ -278,13 +486,30 @@ fun AppBehaviorScreenPreview() {
                 systemApps = 80,
                 userApps = 70,
                 runningApps = 25,
+                launchableApps = 45,
+                disabledApps = 5,
+                recentlyUpdatedApps = 8,
+                totalMemoryUsageMb = 2048,
                 topDrainApps = listOf(
                     AppDrain("Chrome", "com.android.chrome", 125),
                     AppDrain("YouTube", "com.google.android.youtube", 95),
                     AppDrain("Instagram", "com.instagram.android", 65)
                 ),
+                topMemoryApps = listOf(
+                    AppMemoryInfo("Chrome", "com.android.chrome", 450),
+                    AppMemoryInfo("Facebook", "com.facebook.katana", 320),
+                    AppMemoryInfo("YouTube", "com.google.android.youtube", 280)
+                ),
+                recentUpdates = listOf(
+                    AppUpdateInfo("WhatsApp", "com.whatsapp", 0),
+                    AppUpdateInfo("Instagram", "com.instagram.android", 2),
+                    AppUpdateInfo("Twitter", "com.twitter.android", 5)
+                ),
+                usageInterval = UsageInterval.TODAY,
                 status = AppBehaviorStatus.MODERATE
-            )
+            ),
+            selectedInterval = UsageInterval.TODAY,
+            onIntervalChange = {}
         )
     }
 }
