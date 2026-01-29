@@ -131,6 +131,32 @@ fun PerformanceInfoContent(
             value = "${performanceInfo.cpuUsagePercent.toInt()}%"
         )
 
+        InfoCard(
+            title = "CPU Cores",
+            value = "${performanceInfo.cpuCores}"
+        )
+
+        performanceInfo.cpuMaxFrequencyMhz?.let { maxFreq ->
+            InfoCard(
+                title = "CPU Max Frequency",
+                value = "${maxFreq} MHz"
+            )
+        }
+
+        performanceInfo.cpuCurrentFrequencyMhz?.let { currentFreq ->
+            InfoCard(
+                title = "CPU Current Frequency",
+                value = "${currentFreq} MHz"
+            )
+        }
+
+        Text(
+            text = "Memory Information",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+
         // RAM Usage
         InfoCard(
             title = "RAM Usage",
@@ -155,6 +181,33 @@ fun PerformanceInfoContent(
         InfoCard(
             title = "App Memory Usage",
             value = "${performanceInfo.appMemoryUsageMb.toInt()} MB"
+        )
+
+        InfoCard(
+            title = "Native Heap",
+            value = "${performanceInfo.nativeHeapMb.toInt()} MB"
+        )
+
+        InfoCard(
+            title = "Dalvik Heap",
+            value = "${performanceInfo.dalvikHeapMb.toInt()} MB"
+        )
+
+        Text(
+            text = "Process Information",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+
+        InfoCard(
+            title = "Active Threads",
+            value = "${performanceInfo.threadCount}"
+        )
+
+        InfoCard(
+            title = "Running Processes",
+            value = "${performanceInfo.appProcesses}"
         )
     }
 }
@@ -199,11 +252,18 @@ fun PerformanceScreenPreview() {
         PerformanceInfoContent(
             performanceInfo = PerformanceInfo(
                 cpuUsagePercent = 45.5f,
+                cpuCores = 8,
+                cpuMaxFrequencyMhz = 2840,
+                cpuCurrentFrequencyMhz = 1800,
                 totalRamMb = 8192,
                 usedRamMb = 4096,
                 availableRamMb = 4096,
                 ramUsagePercent = 50,
                 appMemoryUsageMb = 256.5f,
+                nativeHeapMb = 128.3f,
+                dalvikHeapMb = 128.2f,
+                threadCount = 42,
+                appProcesses = 25,
                 status = PerformanceStatus.GOOD
             )
         )
